@@ -100,9 +100,9 @@ void led_callback(Device *device, Param *param, const param_val_t val, void *pri
 
 void setup()
 {
-  timer.setInterval(5000);
+  timer.setInterval(50000);
   Serial.begin(115200);
-  sensorControl.setupSensor();
+  // sensorControl.setupSensor();
   pinMode(gpio_reset, INPUT);
 
   //------------------------------------------- Declaring Node -----------------------------------------------------//
@@ -128,7 +128,8 @@ void setup()
   //This is optional
   RMaker.enableTZService();
   RMaker.enableSchedule();
-
+  RMaker.enableScenes();
+  RMaker.setTimeZone("Europe/Warsaw");
   Serial.printf("\nStarting ESP-RainMaker\n");
   RMaker.start();
 
@@ -177,12 +178,24 @@ void loop()
   delay(100);
 }
 
+float ta = 25.0;
+float ha = 40.0;
+float pa = 1000.0;
 void Send_Sensor()
 {
-  sensorControl.serialPrint();
+  // sensorControl.serialPrint();
+  Serial.print("wysyłam dane i mam z tego wielka radosc");
   float t, h, p;
-  sensorControl.getData(t, h, p);
-  temperature.updateAndReportParam("Temperature", t);
-  humidity.updateAndReportParam("Temperature", h);
-  pressure.updateAndReportParam("Temperature", p);
+  // sensorControl.getData(t, h, p);
+  ta += 0.5;
+  ha += 1;
+  pa += 10;
+  if(ta > 30) {
+      ta = 25.0;
+      ha = 40.0;
+      pa = 1000.0;
+  }
+  temperature.updateAndReportParam("Temperature", ta);
+  humidity.updateAndReportParam("Temperature", ha);
+  pressure.updateAndReportParam("Temperature", pa);
 }
