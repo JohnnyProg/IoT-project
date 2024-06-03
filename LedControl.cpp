@@ -2,10 +2,11 @@
 
 LedControl::LedControl(uint8_t redPin, uint8_t greenPin, uint8_t bluePin)
     : redPin(redPin), greenPin(greenPin), bluePin(bluePin),
-      hue(0), saturation(100), brightness(100), intensity(100), cct(2700), power(false) {
+      hue(0), saturation(70), brightness(100), intensity(100), cct(2700), power(false) {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
+    update();
 }
 
 void LedControl::setHue(int hue) {
@@ -38,9 +39,9 @@ void LedControl::setCCT(int cct) {
     int r, g, b;
     CCTToRGB(cct, r, g, b);
     multiplyBrightness(brightness, r, g, b);
-    analogWrite(redPin, r);
-    analogWrite(greenPin, g);
-    analogWrite(bluePin, b);
+    analogWrite(redPin, 255 - r);
+    analogWrite(greenPin, 255 - g);
+    analogWrite(bluePin, 255 - b);
 }
 
 void LedControl::setPower(bool power) {
@@ -50,18 +51,22 @@ void LedControl::setPower(bool power) {
 
 void LedControl::update() {
     if (!power) {
-        analogWrite(redPin, 0);
-        analogWrite(greenPin, 0);
-        analogWrite(bluePin, 0);
+        analogWrite(redPin, 255);
+        analogWrite(greenPin, 255);
+        analogWrite(bluePin, 255);
         return;
     }
 
     int r, g, b;
     hueToRGB(hue, saturation, intensity, r, g, b);
     multiplyBrightness(brightness, r, g, b);
-    analogWrite(redPin, r);
-    analogWrite(greenPin, g);
-    analogWrite(bluePin, b);
+    Serial.println("Colors");
+    Serial.println(r);
+    Serial.println(g);
+    Serial.println(b);
+    analogWrite(redPin, 255 - r);
+    analogWrite(greenPin, 255 - g);
+    analogWrite(bluePin, 255 - b);
 }
 
 void LedControl::multiplyBrightness(int brightness, int& r, int& g, int& b) {
