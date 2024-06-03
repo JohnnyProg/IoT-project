@@ -1,17 +1,18 @@
-/*
-  This example demonstrates the ESP RainMaker with a Relay and DHT sensor.
-  It's detailed explanation video is uploaded on our YouTube channel
-  https://www.youtube.com/techiesms
-*/
 #include <algorithm>
 #include "RMaker.h"
 #include "WiFi.h"
 #include "WiFiProv.h"
 #include <wifi_provisioning/manager.h>
+#include <esp_rmaker_core.h>
+#include <esp_rmaker_standard_params.h>
+#include <esp_rmaker_standard_devices.h>
+#include <esp_rmaker_schedule.h>
+#include <esp_rmaker_scenes.h>
 // Set Defalt Values
 #define DEFAULT_RELAY_MODE true
 #define DEFAULT_Temperature 0
 #define DEFAULT_Humidity 0
+
 #include "LedControl.h"
 #include "SensorControl.h"
 #include <SimpleTimer.h>
@@ -25,7 +26,7 @@ const char *pop = "1234567";
 static uint8_t gpio_reset = 0;
 static uint8_t DHTPIN = 19;
 
-LedControl ledControl(3, 4, 5);
+LedControl ledControl(25, 26, 27);
 
 SensorControl sensorControl;
 
@@ -33,10 +34,9 @@ bool wifi_connected = 0;
 
 //------------------------------------------- Declaring Devices -----------------------------------------------------//
 
-//The framework provides some standard device types like switch, lightbulb, fan, temperature sensor.
-static TemperatureSensor temperature("Temperature");
-static TemperatureSensor humidity("Humidity");
-static TemperatureSensor pressure("Pressure");
+static TemperatureSensor temperature("Temperature", NULL, 25);
+static TemperatureSensor humidity("Humidity", NULL, 70);
+static TemperatureSensor pressure("Pressure", NULL, 1000);
 static LightBulb lightbulb("Swiatlo");
 
 void sysProvEvent(arduino_event_t *sys_event)
@@ -73,26 +73,25 @@ void sysProvEvent(arduino_event_t *sys_event)
       break;
   }
 }
-
 void led_callback(Device *device, Param *param, const param_val_t val, void *priv_data, write_ctx_t *ctx)
 {
   const char *device_name = device->getDeviceName();
   Serial.println(device_name);
   const char *param_name = param->getParamName();
   Serial.println(param_name);
-  Serial.println(val.val.b);
+  Serial.println(val.val.i);
   if (strcmp(param_name, "CCT") == 0) {
-    ledControl.setCCT(val.val.b);
+    ledControl.setCCT(val.val.i);
   } else if (strcmp(param_name, "Power") == 0) {
-    ledControl.setPower(val.val.b);
+    ledControl.setPower(val.val.i);
   } else if (strcmp(param_name, "Hue") == 0) {
-    ledControl.setHue(val.val.b);
+    ledControl.setHue(val.val.i);
   } else if (strcmp(param_name, "Saturation") == 0) {
-    ledControl.setSaturation(val.val.b);
+    ledControl.setSaturation(val.val.i);
   } else if (strcmp(param_name, "Brightness") == 0) {
-    ledControl.setBrightness(val.val.b);
+    ledControl.setBrightness(val.val.i);
   } else if (strcmp(param_name, "Intensity") == 0) {
-    ledControl.setIntensity(val.val.b);
+    ledControl.setIntensity(val.val.i);
   }
   param->updateAndReport(val);
 }
@@ -100,18 +99,16 @@ void led_callback(Device *device, Param *param, const param_val_t val, void *pri
 
 void setup()
 {
-  timer.setInterval(50000);
+  timer.setInterval(60000);
   Serial.begin(115200);
-  // sensorControl.setupSensor();
+   sensorControl.setupSensor();
   pinMode(gpio_reset, INPUT);
 
   //------------------------------------------- Declaring Node -----------------------------------------------------//
   Node my_node;
   my_node = RMaker.initNode("Techiesms");
 
-  //Standard switch device
   lightbulb.addCb(led_callback);
-  lightbulb.addPowerParam(false);
   lightbulb.addBrightnessParam(100);
   lightbulb.addHueParam(30);
   lightbulb.addSaturationParam(30);
@@ -124,16 +121,12 @@ void setup()
   my_node.addDevice(pressure);
   my_node.addDevice(lightbulb);
 
-
-  //This is optional
   RMaker.enableTZService();
   RMaker.enableSchedule();
   RMaker.enableScenes();
   RMaker.setTimeZone("Europe/Warsaw");
   Serial.printf("\nStarting ESP-RainMaker\n");
   RMaker.start();
-
-  // Timer for Sending Sensor's Data
 
   WiFi.onEvent(sysProvEvent);
 
@@ -178,24 +171,13 @@ void loop()
   delay(100);
 }
 
-float ta = 25.0;
-float ha = 40.0;
-float pa = 1000.0;
 void Send_Sensor()
 {
   // sensorControl.serialPrint();
   Serial.print("wysyłam dane i mam z tego wielka radosc");
   float t, h, p;
-  // sensorControl.getData(t, h, p);
-  ta += 0.5;
-  ha += 1;
-  pa += 10;
-  if(ta > 30) {
-      ta = 25.0;
-      ha = 40.0;
-      pa = 1000.0;
-  }
-  temperature.updateAndReportParam("Temperature", ta);
-  humidity.updateAndReportParam("Temperature", ha);
-  pressure.updateAndReportParam("Temperature", pa);
+  sensorControl.getData(t, h, p);
+  temperature.updateAndReportParam("Temperature", t);
+  humidity.updateAndReportParam("Temperature", h);
+  pressure.updateAndReportParam("Temperature", p);
 }
