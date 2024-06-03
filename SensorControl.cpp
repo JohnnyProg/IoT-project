@@ -41,8 +41,8 @@ void SensorControl::getData(float& t, float& h, float& p) {
   float ht = bme.readHumidity();
   float tt = bme.readTemperature();
   float pt = bme.readPressure() / 100.0F;
-  t = roundToTwoDecimalPlaces(ht);
-  h = roundToTwoDecimalPlaces(tt);
+  t = roundToTwoDecimalPlaces(tt);
+  h = roundToTwoDecimalPlaces(ht);
   p = roundToTwoDecimalPlaces(pt);
 }
 
